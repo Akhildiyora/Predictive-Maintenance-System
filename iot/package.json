@@ -1,0 +1,13 @@
+{
+  "name": "iot-simulator",
+  "version": "1.0.0",
+  "description": "Smart Factory IoT Simulator",
+  "main": "simulator.js",
+  "type": "module",
+  "scripts": {
+    "start": "node simulator.js"
+  },
+  "dependencies": {
+    "mqtt": "^5.15.1"
+  }
+}

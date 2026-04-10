@@ -1,0 +1,27 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Hono backend for predictive maintenance",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js"
+  },
+  "keywords": [
+    "iot",
+    "hono",
+    "predictive-maintenance"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "@influxdata/influxdb-client": "^1.33.2",
+    "dotenv": "^17.4.1",
+    "hono": "^4.12.12",
+    "mqtt": "^5.15.1",
+    "pg": "^8.11.3",
+    "ws": "^8.20.0"
+  }
+}
