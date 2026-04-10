@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BACKEND_URL } from '../config';
 
-const WS_URL = import.meta.env.VITE_WS_URL ?? 'ws://localhost:3001';
+const WS_URL = import.meta.env.VITE_WS_URL ?? 'wss://predictive-maintenance-system-2e0r.onrender.com';
 const API_URL = `${BACKEND_URL}/api`;
 
 export function useMetrics() {

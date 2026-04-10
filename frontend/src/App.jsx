@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useMetrics } from './hooks/useMetrics';
 import { BACKEND_URL } from './config';
 import { MachineCard } from './components/MachineCard';
 import SensorTrendChart from './components/SensorTrendChart';
 import IncidentLogPanel from './components/IncidentLogPanel';
-import { LayoutDashboard, Network, Calendar, FileText, Settings, Cloud, Menu, X } from 'lucide-react';
+import Login from './pages/Login';
+import { LayoutDashboard, Network, Calendar, FileText, Settings, Cloud, Menu, X, LogOut } from 'lucide-react';
 import './App.css';
 
 const primaryNav = [
@@ -17,10 +18,27 @@ const primaryNav = [
 const systemNav = ['MQTT Gateway', 'ML Engine', 'Postgres SQL'];
 
 function App() {
+  const [authToken, setAuthToken] = useState(localStorage.getItem('predict_auth_token'));
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem('predict_user') || 'null'));
+  
   const { metrics, alerts, devices, maintenance, isConnected, stream } = useMetrics();
   const [activeControl, setActiveControl] = useState(primaryNav[0].label);
   const [statusMessage, setStatusMessage] = useState('Live telemetry stream active');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleLogin = (token, userRecord) => {
+    setAuthToken(token);
+    setUser(userRecord);
+    localStorage.setItem('predict_auth_token', token);
+    localStorage.setItem('predict_user', JSON.stringify(userRecord));
+  };
+
+  const handleLogout = () => {
+    setAuthToken(null);
+    setUser(null);
+    localStorage.removeItem('predict_auth_token');
+    localStorage.removeItem('predict_user');
+  };
 
   const activeAlerts = alerts.length;
   const healthyScore = useMemo(() => Math.max(60, 98 - activeAlerts * 2), [activeAlerts]);
@@ -46,7 +64,10 @@ function App() {
     try {
       await fetch(`${BACKEND_URL}/api/alerts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
         body: JSON.stringify({
           device_id: devices[0]?.id || 'system',
           message: 'MANUAL OVERRIDE: Emergency state triggered by operator',
@@ -73,7 +94,10 @@ function App() {
       
       const res = await fetch(`${BACKEND_URL}/api/devices/${deviceId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
         body: JSON.stringify({ status: newStatus })
       });
       
@@ -88,7 +112,10 @@ function App() {
 
   const handleArchive = async () => {
     try {
-      const res = await fetch(`${BACKEND_URL}/api/alerts`, { method: 'DELETE' });
+      const res = await fetch(`${BACKEND_URL}/api/alerts`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
       if (res.ok) {
         setStatusMessage('Success: Incident logs archived and cleared');
       }
@@ -97,6 +124,10 @@ function App() {
       setStatusMessage('Error: Failed to archive logs.');
     }
   };
+
+  if (!authToken) {
+    return <Login onLogin={handleLogin} />;
+  }
 
   return (
     <div className="dashboard-scaffold">
@@ -108,9 +139,14 @@ function App() {
           </div>
           <p className="nav-title">PREDICT.AI</p>
         </div>
-        <button className="menu-toggle" onClick={() => setSidebarOpen(true)}>
-          <Menu size={20} />
-        </button>
+        <div className="flex items-center gap-2">
+           <button className="menu-toggle" onClick={handleLogout}>
+            <LogOut size={18} />
+          </button>
+          <button className="menu-toggle" onClick={() => setSidebarOpen(true)}>
+            <Menu size={20} />
+          </button>
+        </div>
       </header>
 
       {/* Mobile Overlay */}
@@ -162,12 +198,16 @@ function App() {
         </div>
 
         <div className="nav-user">
-          <p className="nav-user-name">Akhil_Control</p>
-          <p className="nav-user-role">Chief Engineer · Fleet Command</p>
+          <p className="nav-user-name">{user?.full_name || 'Akhil_Control'}</p>
+          <p className="nav-user-role">{user?.role || 'Chief Engineer'} · Fleet Command</p>
           <div className="nav-user-status">
             <span className={`status-badge ${isConnected ? 'status-nominal' : 'status-critical'}`} />
-            <span>{isConnected ? 'Live telemetry' : 'Offline'}</span>
+            <span>{isConnected ? 'Telemetry Active' : 'Offline'}</span>
           </div>
+          <button className="flex items-center gap-2 mt-4 text-xs opacity-50 hover:opacity-100 transition-opacity" onClick={handleLogout}>
+            <LogOut size={14} />
+            <span>Terminate Session</span>
+          </button>
         </div>
         <button className="manual-override" onClick={handleManualOverride}>
           Manual Override

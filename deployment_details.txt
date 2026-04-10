@@ -1,0 +1,12 @@
+# Predict.AI Deployment Details
+
+### 🚀 Live Services
+- **ML Service (FastAPI)**: https://predictive-maintenance-system-1-hqlp.onrender.com
+- **Backend (Node.js/Hono)**: https://predictive-maintenance-system-2e0r.onrender.com
+- **Frontend (React)**: https://predictive-maintenance-system-five.vercel.app/
+
+### 🗄️ Infrastructure
+- **Database (Supabase)**: postgresql://postgres:[YOUR-PASSWORD]@db.kvjiltaouyoxmqvkvimd.supabase.co:5432/postgres
+- **MQTT Broker (HiveMQ)**: e2fec1870d2346dc9f98451005965416.s1.eu.hivemq.cloud:8884
+
+
