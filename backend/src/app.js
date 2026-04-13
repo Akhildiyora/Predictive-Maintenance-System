@@ -14,12 +14,14 @@ import {
   updateDeviceStatus,
   createManualAlert,
   scheduleMaintenance,
-  listMaintenance
+  listMaintenance,
+  updateMaintenanceStatus
 } from './services/telemetry.js';
 import { predictFailureMetrics } from './services/prediction.js';
-import { initWebSocketServer } from './services/broadcast.js';
+import { initWebSocketServer, broadcastMqttStatus, broadcastMqttRaw } from './services/broadcast.js';
 import { hashPassword, comparePassword, generateToken, verifyToken } from './services/auth.js';
 import { findUserByEmail, createUser } from './services/user.js';
+import { getSchemaInfo, executeRawQuery, getDatabaseMetrics } from './services/database.js';
 
 dotenv.config();
 
@@ -57,11 +59,7 @@ const wsPort = Number(process.env.WS_PORT ?? 3001);
 const mqttUrl = process.env.MQTT_BROKER_URL ?? 'mqtt://localhost:1883';
 const mqttTopic = 'factory/+/sensor/data';
 
-// ... (WebSocket and MQTT logic unchanged, omitted for brevity in replace call)
-// Actually, I should include the whole file content if I'm replacing a large block.
-// Let's refine the replacement to be more precise or cover the needed sections.
-
-// ... (re-implementing the app logic with auth)
+// WebSocket and MQTT initialized via services
 
 // 1. Initialize WebSocket Server (Step 6)
 initWebSocketServer({ port: wsPort });
@@ -76,12 +74,27 @@ const mqttClient = mqtt.connect(mqttUrl, {
 mqttClient.on('connect', () => {
   console.log(`[backend] connected to MQTT broker ${mqttUrl}`);
   mqttClient.subscribe(mqttTopic);
+  broadcastMqttStatus('connected', { url: mqttUrl, topic: mqttTopic });
+});
+
+mqttClient.on('error', (err) => {
+  console.error('[backend] MQTT error', err);
+  broadcastMqttStatus('error', { message: err.message });
+});
+
+mqttClient.on('close', () => {
+  broadcastMqttStatus('disconnected', { message: 'Broker connection lost' });
 });
 
 mqttClient.on('message', async (topic, payload) => {
   try {
-    const data = JSON.parse(payload.toString());
-    await pushTelemetry(data);
+    const rawPayload = payload.toString();
+    // 1. Broadcast raw message for the Gateway View
+    broadcastMqttRaw(topic, rawPayload);
+
+    // 2. Process telemetry normally
+    const data = JSON.parse(rawPayload);
+    await pushTelemetry(data).catch(e => console.error('[backend] pushTelemetry error', e.message));
   } catch (err) {
     console.error('[backend] failed to process MQTT message', err);
   }
@@ -108,13 +121,25 @@ app.post('/auth/signup', async (ctx) => {
 app.post('/auth/login', async (ctx) => {
   try {
     const { email, password } = await ctx.req.json();
+    console.log(`[DEBUG] Login attempt for: ${email}`);
+    
     const user = await findUserByEmail(email);
-    if (!user || !(await comparePassword(password, user.password))) {
+    if (!user) {
+      console.log(`[DEBUG] User not found: ${email}`);
+      return ctx.json({ error: 'invalid credentials' }, 401);
+    }
+    
+    const isMatch = await comparePassword(password, user.password);
+    if (!isMatch) {
+      console.log(`[DEBUG] Password mismatch for: ${email}`);
        return ctx.json({ error: 'invalid credentials' }, 401);
     }
+    
+    console.log(`[DEBUG] Login successful: ${email}`);
     const token = generateToken({ id: user.id, email: user.email });
     return ctx.json({ token, user: { id: user.id, email: user.email, full_name: user.full_name } });
   } catch (err) {
+    console.error(`[DEBUG] Login error: ${err.message}`);
     return ctx.json({ error: 'login failed' }, 500);
   }
 });
@@ -146,6 +171,18 @@ app.post('/api/maintenance', authMiddleware, async (ctx) => {
   return ctx.json(await scheduleMaintenance(payload));
 });
 
+app.patch('/api/maintenance/:id', authMiddleware, async (ctx) => {
+  try {
+    const id = ctx.req.param('id');
+    const { status } = await ctx.req.json();
+    const updated = await updateMaintenanceStatus(id, status);
+    if (!updated) return ctx.json({ error: 'Schedule not found' }, 404);
+    return ctx.json(updated);
+  } catch (err) {
+    return ctx.json({ error: err.message }, 400);
+  }
+});
+
 app.delete('/api/alerts', authMiddleware, async (ctx) => {
   return ctx.json(await archiveAlerts());
 });
@@ -159,6 +196,49 @@ app.patch('/api/devices/:id', authMiddleware, async (ctx) => {
 app.post('/api/ml/predict', async (ctx) => {
   const payload = await ctx.req.json();
   return ctx.json(await predictFailureMetrics(payload.metrics));
+});
+
+// Secure MQTT Publish Endpoint (Step 6 Implementation)
+app.post('/api/mqtt/publish', authMiddleware, async (ctx) => {
+  try {
+    const { topic, payload } = await ctx.req.json();
+    if (!topic || !payload) return ctx.json({ error: 'topic and payload required' }, 400);
+
+    const message = typeof payload === 'object' ? JSON.stringify(payload) : payload;
+    mqttClient.publish(topic, message);
+    
+    console.log(`[backend] manual publish to ${topic} by ${ctx.get('user')?.email}`);
+    return ctx.json({ success: true, topic, message });
+  } catch (err) {
+    return ctx.json({ error: 'publish failed' }, 500);
+  }
+});
+
+// Database Command Center Endpoints
+app.get('/api/db/schema', authMiddleware, async (ctx) => {
+  try {
+    return ctx.json(await getSchemaInfo());
+  } catch (err) {
+    return ctx.json({ error: 'failed to fetch schema' }, 500);
+  }
+});
+
+app.get('/api/db/metrics', authMiddleware, async (ctx) => {
+  try {
+    return ctx.json(await getDatabaseMetrics());
+  } catch (err) {
+    return ctx.json({ error: 'failed to fetch metrics' }, 500);
+  }
+});
+
+app.post('/api/db/query', authMiddleware, async (ctx) => {
+  try {
+    const { sql } = await ctx.req.json();
+    if (!sql) return ctx.json({ error: 'sql query required' }, 400);
+    return ctx.json(await executeRawQuery(sql));
+  } catch (err) {
+    return ctx.json({ error: err.message || 'query execution failed' }, 400);
+  }
 });
 
 app.onError((err, ctx) => {

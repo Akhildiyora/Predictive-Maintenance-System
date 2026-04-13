@@ -11,6 +11,8 @@ export function useMetrics() {
   const [devices, setDevices] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [stream, setStream] = useState([]);
+  const [mqttStatus, setMqttStatus] = useState({ status: 'unknown', details: {} });
+  const [mqttRawLogs, setMqttRawLogs] = useState([]);
 
   // Fetch initial data
   const refreshData = useCallback(async () => {
@@ -45,6 +47,7 @@ export function useMetrics() {
 
     ws.onmessage = (event) => {
       const message = JSON.parse(event.data);
+      
       if (message.type === 'telemetry' && message.payload) {
         setMetrics((prev) => ({
           ...prev,
@@ -58,6 +61,21 @@ export function useMetrics() {
 
       if (message.type === 'alert' && message.payload) {
         setAlerts((prev) => [message.payload, ...prev].slice(0, 20));
+      }
+
+      if (message.type === 'mqtt_status') {
+        setMqttStatus(message.payload);
+      }
+
+      if (message.type === 'mqtt_raw') {
+        setMqttRawLogs((prev) => [
+          { 
+            ...message.payload, 
+            id: `${message.payload.topic}-${performance.now()}-${Math.random()}`, 
+            timestamp: new Date().toISOString() 
+          },
+          ...prev
+        ].slice(0, 100));
       }
     };
 
@@ -79,5 +97,7 @@ export function useMetrics() {
     return () => clearInterval(timer);
   }, [refreshData]);
 
-  return { metrics, alerts, devices, maintenance, isConnected, stream };
+  const clearMqttLogs = useCallback(() => setMqttRawLogs([]), []);
+
+  return { metrics, alerts, devices, maintenance, isConnected, stream, mqttStatus, mqttRawLogs, clearMqttLogs };
 }

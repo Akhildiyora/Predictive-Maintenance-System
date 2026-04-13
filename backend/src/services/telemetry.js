@@ -126,6 +126,16 @@ export async function listMaintenance() {
   return result.rows;
 }
 
+export async function updateMaintenanceStatus(id, status) {
+  const allowed = ['pending', 'in_progress', 'completed', 'cancelled'];
+  if (!allowed.includes(status)) throw new Error('Invalid status value');
+  const result = await pool.query(
+    'UPDATE maintenance_schedules SET status = $2 WHERE id = $1 RETURNING *',
+    [id, status]
+  );
+  return result.rows[0];
+}
+
 export async function archiveAlerts() {
   const query = 'DELETE FROM alerts WHERE id IN (SELECT id FROM alerts ORDER BY created_at DESC LIMIT 100)';
   const result = await pool.query(query);

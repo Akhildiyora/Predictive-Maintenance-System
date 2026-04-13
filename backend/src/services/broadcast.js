@@ -9,11 +9,12 @@ function safeSend(socket, payload) {
 }
 
 export function initWebSocketServer({ port = 3001 } = {}) {
-  const wss = new WebSocketServer({ port });
+  try {
+    const wss = new WebSocketServer({ port });
 
-  wss.on('connection', (socket) => {
-    clients.add(socket);
-    safeSend(socket, { type: 'status', payload: { message: 'connected' } });
+    wss.on('connection', (socket) => {
+      clients.add(socket);
+      safeSend(socket, { type: 'status', payload: { message: 'connected' } });
 
     socket.on('close', () => {
       clients.delete(socket);
@@ -28,7 +29,11 @@ export function initWebSocketServer({ port = 3001 } = {}) {
     console.log(`[backend] websocket server listening on ws://localhost:${port}`);
   });
 
-  return wss;
+    return wss;
+  } catch (err) {
+    console.error(`[backend] WARNING: Failed to start WebSocket server on ${port}. Bridge mode disabled.`, err.message);
+    return null;
+  }
 }
 
 function broadcast(type, payload) {
@@ -42,4 +47,12 @@ export function broadcastTelemetry(payload) {
 
 export function broadcastAlert(payload) {
   broadcast('alert', payload);
+}
+
+export function broadcastMqttStatus(status, details) {
+  broadcast('mqtt_status', { status, details });
+}
+
+export function broadcastMqttRaw(topic, payload) {
+  broadcast('mqtt_raw', { topic, payload });
 }

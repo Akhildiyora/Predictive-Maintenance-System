@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Cloud, Lock, Mail, ArrowRight } from 'lucide-react';
+import { Lock, Mail, ArrowRight, User, ShieldAlert, Cpu } from 'lucide-react';
 import { BACKEND_URL } from '../config';
 
 export default function Login({ onLogin }) {
+  const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -13,11 +15,16 @@ export default function Login({ onLogin }) {
     setLoading(true);
     setError('');
 
+    const endpoint = isSignup ? '/auth/signup' : '/auth/login';
+    const payload = isSignup 
+      ? { email, password, full_name: fullName } 
+      : { email, password };
+
     try {
-      const res = await fetch(`${BACKEND_URL}/auth/login`, {
+      const res = await fetch(`${BACKEND_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
@@ -34,38 +41,72 @@ export default function Login({ onLogin }) {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-surface-lowest p-6">
-      <div className="layer-1 w-full max-w-md p-10 rounded-3xl border border-white/5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16" />
-        
-        <div className="flex flex-col items-center mb-10">
-          <div className="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center mb-4 border border-primary/30">
-            <Cloud className="text-primary" size={28} />
+    <div className="relative min-h-screen flex items-center justify-center p-6 bg-[#050608] overflow-hidden font-sans">
+      {/* Cinematic Perspective Background */}
+      <img 
+        src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=2070" 
+        alt="Industrial Neural Gateway" 
+        className="absolute inset-0 w-full h-full object-cover filter brightness-[0.2] contrast-125 saturate-150 transform scale-110 animate-pulse transition-all duration-[10s]"
+      />
+      
+      {/* Dynamic Overlay Layers */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(0,0,0,0.8)_100%)] z-0" />
+      <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-blue-600/10 blur-[150px] rounded-full z-0" />
+
+      {/* High-Performance Access Panel */}
+      <div className="relative z-20 w-full max-w-[540px] p-12 md:p-16 rounded-[64px] bg-[#0c0d0f]/60 backdrop-blur-3xl border border-white/10 shadow-[0_50px_120px_-30px_rgba(0,0,0,0.9)] animate-reveal">
+        <div className="flex flex-col items-center mb-16 space-y-8">
+          <div className="w-20 h-20 bg-blue-600/15 rounded-3xl flex items-center justify-center border border-blue-600/30 shadow-[0_0_50px_rgba(59,130,246,0.3)] group hover:scale-110 transition-transform duration-500 cursor-none">
+            <Cpu className="text-blue-400 group-hover:animate-spin" size={40} />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">PREDICT.AI</h1>
-          <p className="text-on-surface-variant text-sm mt-1">Industrial Intelligence Gateway</p>
+          <div className="text-center space-y-3">
+            <h1 className="text-6xl font-black tracking-[0.3em] text-white uppercase drop-shadow-2xl">PREDICT.AI</h1>
+            <p className="text-[12px] font-black tracking-[0.6em] uppercase text-blue-500/60 pl-2">Security Level :: Alpha</p>
+          </div>
+          <div className="w-32 h-1 bg-gradient-to-r from-transparent via-blue-600/40 to-transparent rounded-full" />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant px-1">Control Credentials</label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
+        <form onSubmit={handleSubmit} className="space-y-12">
+          <div className="space-y-4">
+            {isSignup && (
+              <div className="group relative flex items-center transition-all animate-reveal" style={{ animationDelay: '0.1s' }}>
+                <div className="absolute left-6 text-blue-500/40 group-focus-within:text-blue-400 transition-colors pointer-events-none">
+                  <User size={20} />
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="IDENTITY NAME"
+                  className="w-full bg-white/2 border border-white/5 border-b-2 border-b-white/10 rounded-2xl py-7 pl-16 pr-8 text-white font-bold tracking-widest focus:outline-none focus:bg-blue-600/5 focus:border-blue-600/40 focus:border-b-blue-500 transition-all placeholder:text-white/10 placeholder:text-[11px] placeholder:font-black placeholder:tracking-[0.4em]"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+
+            <div className="group relative flex items-center transition-all animate-reveal" style={{ animationDelay: '0.2s' }}>
+              <div className="absolute left-6 text-blue-500/40 group-focus-within:text-blue-400 transition-colors pointer-events-none">
+                <Mail size={20} />
+              </div>
               <input 
                 type="email" 
-                placeholder="Engineer Email"
-                className="w-full bg-surface-low border border-white/10 rounded-xl py-3 pl-12 pr-4 focus:border-primary outline-none transition-all placeholder:text-white/20"
+                placeholder="NETWORK EMAIL"
+                className="w-full bg-white/2 border border-white/5 border-b-2 border-b-white/10 rounded-2xl py-6 pl-16 pr-8 text-white font-bold tracking-widest focus:outline-none focus:bg-blue-600/5 focus:border-blue-600/40 focus:border-b-blue-500 transition-all placeholder:text-white/10 placeholder:text-[10px] placeholder:font-black placeholder:tracking-[0.4em]"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
+
+            <div className="group relative flex items-center transition-all animate-reveal" style={{ animationDelay: '0.3s' }}>
+              <div className="absolute left-6 text-blue-500/40 group-focus-within:text-blue-400 transition-colors pointer-events-none">
+                <Lock size={20} />
+              </div>
               <input 
                 type="password" 
-                placeholder="Access Key"
-                className="w-full bg-surface-low border border-white/10 rounded-xl py-3 pl-12 pr-4 focus:border-primary outline-none transition-all placeholder:text-white/20"
+                placeholder="ACCESS KEY"
+                className="w-full bg-white/2 border border-white/5 border-b-2 border-b-white/10 rounded-2xl py-6 pl-16 pr-8 text-white font-bold tracking-widest focus:outline-none focus:bg-blue-600/5 focus:border-blue-600/40 focus:border-b-blue-500 transition-all placeholder:text-white/10 placeholder:text-[10px] placeholder:font-black placeholder:tracking-[0.4em]"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -74,24 +115,32 @@ export default function Login({ onLogin }) {
           </div>
 
           {error && (
-             <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 text-sm rounded-lg text-center">
-               {error}
+             <div className="p-6 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-black uppercase tracking-[0.3em] rounded-2xl text-center animate-reveal flex items-center justify-center gap-4">
+               <ShieldAlert size={18} className="shrink-0" />
+               <span>{error}</span>
              </div>
           )}
 
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full btn-kinetic group"
-          >
-            <span>{loading ? 'Authenticating...' : 'Engage Interface'}</span>
-            {!loading && <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />}
-          </button>
-        </form>
+          <div className="flex flex-col gap-6 animate-reveal" style={{ animationDelay: '0.4s' }}>
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="group relative w-full py-7 bg-gradient-to-br from-blue-600 to-blue-400 rounded-2xl flex items-center justify-center gap-4 text-blue-950 text-sm font-black uppercase tracking-[0.3em] overflow-hidden shadow-[0_15px_45px_-10px_rgba(59,130,246,0.4)] hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50"
+            >
+              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span>{loading ? 'SYNCHRONIZING...' : (isSignup ? 'PROVISION ACCESS' : 'ENGAGE INTERFACE')}</span>
+              {!loading && <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />}
+            </button>
 
-        <p className="mt-8 text-center text-sm text-on-surface-variant">
-          Unauthorized access is strictly monitored.
-        </p>
+            <button 
+              type="button"
+              onClick={() => setIsSignup(!isSignup)}
+              className="w-full py-6 rounded-2xl bg-white/2 border border-white/5 text-slate-500 text-[11px] font-black uppercase tracking-[0.4em] hover:bg-white/5 hover:text-white hover:border-white/10 transition-all"
+            >
+              {isSignup ? 'Return to Access Gate' : 'Provision New Identity'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

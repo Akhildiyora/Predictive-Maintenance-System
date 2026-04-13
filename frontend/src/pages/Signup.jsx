@@ -93,7 +93,7 @@ export default function Signup({ onSignup }) {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full btn-kinetic group mt-2"
+            className="w-full btn-kinetic flex items-center justify-center gap-2 group mt-2"
           >
             <span>{loading ? 'Registering...' : 'Provision Account'}</span>
             {!loading && <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />}
