@@ -29,3 +29,6 @@ ml/venv
 .vscode
 .idea
 .DS_Store
+
+# Secrets
+*.pem
