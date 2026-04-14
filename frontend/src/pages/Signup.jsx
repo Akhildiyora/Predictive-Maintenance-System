@@ -35,26 +35,26 @@ export default function Signup({ onSignup }) {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-surface-lowest p-6">
-      <div className="layer-1 w-full max-w-md p-10 rounded-3xl border border-white/5 relative overflow-hidden">
+    <div className="flex items-center justify-center min-h-screen bg-surface-lowest p-3">
+      <div className="layer-1 max-w-[440px] p-5 rounded-3xl border border-white/5 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16" />
         
-        <div className="flex flex-col items-center mb-10">
-          <div className="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center mb-4 border border-primary/30">
+        <div className="flex flex-col items-center mb-5">
+          <div className="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center mb-2 border border-primary/30">
             <Cloud className="text-primary" size={28} />
           </div>
           <h1 className="text-2xl font-bold tracking-tight">PREDICT.AI</h1>
-          <p className="text-on-surface-variant text-sm mt-1">Register New Control Account</p>
+          <p className="text-on-surface-variant text-sm mt-0.5">Register New Control Account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-2">
+          <div className="space-y-1">
             <div className="relative">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
               <input 
                 type="text" 
                 placeholder="Full Name"
-                className="w-full bg-surface-low border border-white/10 rounded-xl py-3 pl-12 pr-4 focus:border-primary outline-none transition-all placeholder:text-white/20"
+                className="w-full bg-surface-low border border-white/10 rounded-xl py-1.5 pl-12 pr-4 focus:border-primary outline-none transition-all placeholder:text-white/20"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
@@ -65,7 +65,7 @@ export default function Signup({ onSignup }) {
               <input 
                 type="email" 
                 placeholder="Engineer Email"
-                className="w-full bg-surface-low border border-white/10 rounded-xl py-3 pl-12 pr-4 focus:border-primary outline-none transition-all placeholder:text-white/20"
+                className="w-full bg-surface-low border border-white/10 rounded-xl py-1.5 pl-12 pr-4 focus:border-primary outline-none transition-all placeholder:text-white/20"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -76,7 +76,7 @@ export default function Signup({ onSignup }) {
               <input 
                 type="password" 
                 placeholder="Choose Access Key"
-                className="w-full bg-surface-low border border-white/10 rounded-xl py-3 pl-12 pr-4 focus:border-primary outline-none transition-all placeholder:text-white/20"
+                className="w-full bg-surface-low border border-white/10 rounded-xl py-1.5 pl-12 pr-4 focus:border-primary outline-none transition-all placeholder:text-white/20"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -85,7 +85,7 @@ export default function Signup({ onSignup }) {
           </div>
 
           {error && (
-             <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 text-sm rounded-lg text-center">
+             <div className="p-1.5 bg-red-500/10 border border-red-500/20 text-red-500 text-sm rounded-lg text-center">
                {error}
              </div>
           )}
@@ -93,14 +93,14 @@ export default function Signup({ onSignup }) {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full btn-kinetic flex items-center justify-center gap-2 group mt-2"
+            className="w-full btn-kinetic flex items-center justify-center gap-1 group mt-1"
           >
             <span>{loading ? 'Registering...' : 'Provision Account'}</span>
-            {!loading && <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />}
+            {!loading && <ArrowRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform" />}
           </button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-on-surface-variant">
+        <p className="mt-4 text-center text-sm text-on-surface-variant">
           Access is limited to authorized personnel only.
         </p>
       </div>
